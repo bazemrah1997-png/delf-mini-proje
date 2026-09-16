@@ -16,7 +16,7 @@
         liste.innerHTML = urunler.map(u => `
           <div>
             <strong>${u.ad}</strong> - ${u.fiyat}₺
-            - Stok: ${u.stok > 0 ? u.stok + ' adet' : 'Tükendi'}
+            - Stok: <span style="color: ${u.stok > 0 ? 'green' : 'red'}">${u.stok > 0 ? u.stok + ' adet' : 'Tükendi'}</span>
           </div>
         `).join('');
       });
