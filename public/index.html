@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Delf Teknoloji - Ürünler</title>
+</head>
+<body>
+  <h1>Ürünlerimiz</h1>
+  <div id="urun-listesi">Yükleniyor...</div>
+
+  <script>
+    fetch('/api/urunler')
+      .then(response => response.json())
+      .then(urunler => {
+        const liste = document.getElementById('urun-listesi');
+        liste.innerHTML = urunler.map(u => `
+          <div>
+            <strong>${u.ad}</strong> - ${u.fiyat}₺
+            - Stok: ${u.stok > 0 ? u.stok + ' adet' : 'Tükendi'}
+          </div>
+        `).join('');
+      });
+  </script>
+</body>
+</html>
