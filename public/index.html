@@ -3,23 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <title>Delf Teknoloji - Ürünler</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .urun { margin-bottom: 10px; }
+    button { margin-left: 10px; cursor: pointer; }
+    #sepet-kutusu { border: 1px solid #ccc; padding: 15px; margin-top: 30px; max-width: 400px; }
+    #yeni-urun-form { border: 1px solid #ccc; padding: 15px; margin-top: 30px; max-width: 400px; }
+    input { display: block; margin-bottom: 8px; padding: 5px; width: 200px; }
+  </style>
 </head>
 <body>
   <h1>Ürünlerimiz</h1>
   <div id="urun-listesi">Yükleniyor...</div>
 
+  <div id="sepet-kutusu">
+    <h3>Sepetim (<span id="sepet-adet">0</span> ürün)</h3>
+    <div id="sepet-listesi">Sepet boş</div>
+  </div>
+
+  <div id="yeni-urun-form">
+    <h3>Yeni Ürün Ekle</h3>
+    <input type="text" id="yeni-ad" placeholder="Ürün adı">
+    <input type="number" id="yeni-fiyat" placeholder="Fiyat">
+    <input type="number" id="yeni-stok" placeholder="Stok adedi">
+    <button onclick="yeniUrunEkle()">Ürünü Ekle</button>
+  </div>
+
   <script>
-    fetch('/api/urunler')
+    // Ürünleri backend'den çekip ekrana bas
+    function urunleriYukle() {
+      fetch('/api/urunler')
+        .then(response => response.json())
+        .then(urunler => {
+          const liste = document.getElementById('urun-listesi');
+          liste.innerHTML = urunler.map(u => `
+            <div class="urun">
+              <strong>${u.ad}</strong> - ${u.fiyat}₺
+              - Stok: <span style="color: ${u.stok > 0 ? 'green' : 'red'}">${u.stok > 0 ? u.stok + ' adet' : 'Tükendi'}</span>
+              <button onclick="sepeteEkle(${u.id})" ${u.stok <= 0 ? 'disabled' : ''}>Sepete Ekle</button>
+            </div>
+          `).join('');
+        });
+    }
+
+    // Sepeti backend'den çekip ekrana bas
+    function sepetiYukle() {
+      fetch('/api/sepet')
+        .then(response => response.json())
+        .then(sepet => {
+          document.getElementById('sepet-adet').innerText = sepet.length;
+          const liste = document.getElementById('sepet-listesi');
+          if (sepet.length === 0) {
+            liste.innerHTML = 'Sepet boş';
+          } else {
+            liste.innerHTML = sepet.map(u => `<div>${u.ad} - ${u.fiyat}₺</div>`).join('');
+          }
+        });
+    }
+
+    // Sepete ürün ekleme isteği (POST)
+    function sepeteEkle(urunId) {
+      fetch('/api/sepet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urunId })
+      })
+        .then(response => response.json())
+        .then(() => {
+          sepetiYukle();
+        });
+    }
+
+    // Yeni ürün ekleme isteği (POST)
+    function yeniUrunEkle() {
+      const ad = document.getElementById('yeni-ad').value;
+      const fiyat = Number(document.getElementById('yeni-fiyat').value);
+      const stok = Number(document.getElementById('yeni-stok').value);
+
+      if (!ad || !fiyat) {
+        alert('Ürün adı ve fiyat zorunlu!');
+        return;
+      }
+
+        fetch('/api/urunler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ad, fiyat, stok })
+    })
       .then(response => response.json())
-      .then(urunler => {
-        const liste = document.getElementById('urun-listesi');
-        liste.innerHTML = urunler.map(u => `
-          <div>
-            <strong>${u.ad}</strong> - ${u.fiyat}₺
-            - Stok: <span style="color: ${u.stok > 0 ? 'green' : 'red'}">${u.stok > 0 ? u.stok + ' adet' : 'Tükendi'}</span>
-          </div>
-        `).join('');
+      .then(() => {
+        urunleriYukle();
+        document.getElementById('yeni-ad').value = '';
+        document.getElementById('yeni-fiyat').value = '';
+        document.getElementById('yeni-stok').value = '';
       });
+  }
+
+  urunleriYukle();
+  sepetiYukle();
   </script>
 </body>
 </html>
